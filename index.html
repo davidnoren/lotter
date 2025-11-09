@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lottrapportering</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #e5e7eb;
+    }
+    input[type="number"] {
+      width: 80px;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1.5em;
+      padding: 10px 20px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #1e40af;
+    }
+    .message {
+      margin-top: 1em;
+      font-weight: bold;
+      color: green;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rapportera lotter</h1>
+  <form id="lotterForm">
+    <table>
+      <thead>
+        <tr>
+          <th>Namn</th>
+          <th>Kategori A</th>
+          <th>Kategori B</th>
+          <th>Kategori C</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <button type="submit">Skicka</button>
+  </form>
+  <div class="message" id="message"></div>
+
+  <script>
+    const tableBody = document.getElementById('tableBody');
+
+    // Läs in namnlista från CSV-fil i samma mapp
+    fetch('namnlista.csv')
+      .then(res => res.text())
+      .then(text => {
+        const namnLista = text.split(/\r?\n/).filter(n => n.trim() !== '');
+        namnLista.forEach((namn, i) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${namn}</td>
+            <td><input type='number' name='kategoriA${i+1}' min='0' required></td>
+            <td><input type='number' name='kategoriB${i+1}' min='0' required></td>
+            <td><input type='number' name='kategoriC${i+1}' min='0' required></td>
+          `;
+          tableBody.appendChild(row);
+        });
+      })
+      .catch(err => {
+        console.error('Kunde inte läsa namnlista:', err);
+        tableBody.innerHTML = '<tr><td colspan="4">Fel: kunde inte läsa namnlista.csv</td></tr>';
+      });
+
+    const form = document.getElementById('lotterForm');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const rows = tableBody.querySelectorAll('tr');
+      const data = [];
+
+      rows.forEach((row, i) => {
+        const namn = row.querySelector('td').textContent;
+        const inputs = row.querySelectorAll('input');
+        data.push({
+          namn,
+          kategoriA: inputs[0].value,
+          kategoriB: inputs[1].value,
+          kategoriC: inputs[2].value
+        });
+      });
+
+      try {
+        const res = await fetch('/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) {
+          message.textContent = 'Datan har sparats!';
+          form.reset();
+        } else {
+          message.textContent = 'Ett fel uppstod vid sparande.';
+          message.style.color = 'red';
+        }
+      } catch (err) {
+        console.error(err);
+        message.textContent = 'Kunde inte kontakta servern.';
+        message.style.color = 'red';
+      }
+    });
+  </script>
+</body>
+</html>
