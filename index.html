@@ -76,72 +76,33 @@
   </form>
   <div class="message" id="message"></div>
 
-  <script>
-    const tableBody = document.getElementById('tableBody');
+ <script>
+const tableBody = document.getElementById('tableBody');
 
-    // Läs in namnlista från CSV-fil i samma mapp
-    fetch('https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxxxxxx/exec')
+fetch('https://script.google.com/macros/s/AKfycbXXXXXXXXXXXXXXX/exec')
   .then(res => res.json())
   .then(data => {
-    const namnLista = data.slice(1).map(row => row[0]); // skippar rubriker
-    // fyll tabellen som tidigare
-  });
+    // hoppa över rubrikraden (första raden)
+    const namnLista = data.slice(1).map(row => row[0]).filter(Boolean);
 
-        namnLista.forEach((namn, i) => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${namn}</td>
-            <td><input type='number' name='kategoriA${i+1}' min='0' required></td>
-            <td><input type='number' name='kategoriB${i+1}' min='0' required></td>
-            <td><input type='number' name='kategoriC${i+1}' min='0' required></td>
-          `;
-          tableBody.appendChild(row);
-        });
-      })
-      .catch(err => {
-        console.error('Kunde inte läsa namnlista:', err);
-        tableBody.innerHTML = '<tr><td colspan="4">Fel: kunde inte läsa namnlista.csv</td></tr>';
-      });
+    tableBody.innerHTML = '';
 
-    const form = document.getElementById('lotterForm');
-    const message = document.getElementById('message');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const rows = tableBody.querySelectorAll('tr');
-      const data = [];
-
-      rows.forEach((row, i) => {
-        const namn = row.querySelector('td').textContent;
-        const inputs = row.querySelectorAll('input');
-        data.push({
-          namn,
-          kategoriA: inputs[0].value,
-          kategoriB: inputs[1].value,
-          kategoriC: inputs[2].value
-        });
-      });
-
-      try {
-        const res = await fetch('https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxxxxxx/exec', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        if (res.ok) {
-          message.textContent = 'Datan har sparats!';
-          form.reset();
-        } else {
-          message.textContent = 'Ett fel uppstod vid sparande.';
-          message.style.color = 'red';
-        }
-      } catch (err) {
-        console.error(err);
-        message.textContent = 'Kunde inte kontakta servern.';
-        message.style.color = 'red';
-      }
+    namnLista.forEach((namn, i) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${namn}</td>
+        <td><input type="number" name="kategoriA${i+1}" value="${data[i+1]?.[1] || 0}" min="0"></td>
+        <td><input type="number" name="kategoriB${i+1}" value="${data[i+1]?.[2] || 0}" min="0"></td>
+        <td><input type="number" name="kategoriC${i+1}" value="${data[i+1]?.[3] || 0}" min="0"></td>
+      `;
+      tableBody.appendChild(row);
     });
-  </script>
+  })
+  .catch(err => {
+    console.error('Kunde inte läsa från Google Sheet:', err);
+    tableBody.innerHTML = '<tr><td colspan="4">Fel: kunde inte läsa data</td></tr>';
+  });
+</script>
+
 </body>
 </html>
