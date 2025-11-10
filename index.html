@@ -80,10 +80,13 @@
     const tableBody = document.getElementById('tableBody');
 
     // Läs in namnlista från CSV-fil i samma mapp
-    fetch('namnlista.csv')
-      .then(res => res.text())
-      .then(text => {
-        const namnLista = text.split(/\r?\n/).filter(n => n.trim() !== '');
+    fetch('https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxxxxxx/exec')
+  .then(res => res.json())
+  .then(data => {
+    const namnLista = data.slice(1).map(row => row[0]); // skippar rubriker
+    // fyll tabellen som tidigare
+  });
+
         namnLista.forEach((namn, i) => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -121,7 +124,7 @@
       });
 
       try {
-        const res = await fetch('/save', {
+        const res = await fetch('https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxxxxxx/exec', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
